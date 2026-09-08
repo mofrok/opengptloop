@@ -123,6 +123,20 @@ export function CustomAgentsPanel() {
     void loadTools(undefined, false);
   };
 
+  // Reload the Main Agent's system prompt into the editor, replacing the current text. The initial
+  // pre-fill only happens once when the creation popup opens; this button lets the user re-fetch and
+  // re-fill the system prompt as many times as they want (only on Custom Agent creation).
+  const reloadSystemPrompt = () => {
+    setPromptLoading(true);
+    setPromptError(null);
+    fetchMainAgentSystemPrompt()
+      .then((prompt) => setDraft((d) => (d ? { ...d, systemPrompt: prompt } : d)))
+      .catch(() =>
+        setPromptError("Couldn't reload the Main Agent's system prompt. Check the backend and try again."),
+      )
+      .finally(() => setPromptLoading(false));
+  };
+
   const save = () => {
     if (!draft) return;
     const name = draft.name.trim();
@@ -351,8 +365,20 @@ export function CustomAgentsPanel() {
                   System prompt
                   {promptLoading && (
                     <span className="inline-flex items-center gap-1 text-[10px] text-[var(--subtle)]">
-                      <RefreshCw className="h-3 w-3 animate-spin" /> pre-filling from Main Agent…
+                      <RefreshCw className="h-3 w-3 animate-spin" /> loading Main Agent prompt…
                     </span>
+                  )}
+                  {draft.id === null && (
+                    <button
+                      type="button"
+                      onClick={reloadSystemPrompt}
+                      disabled={promptLoading}
+                      className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] border border-[var(--border)] px-2 py-0.5 text-[10px] text-[var(--muted)] hover:border-[var(--secondary)] disabled:opacity-50"
+                      title="Reload the Main Agent's system prompt into the editor"
+                    >
+                      <RefreshCw className={cn("h-3 w-3", promptLoading && "animate-spin")} />
+                      Reload system prompt
+                    </button>
                   )}
                 </span>
               }
