@@ -24,6 +24,7 @@ import type {
   Skill,
   SubAgent,
   SubAgentRun,
+  SystemPrompt,
   TeamAgentBlock,
   TeamAgentRole,
   TeamAgentSegment,
@@ -47,6 +48,7 @@ import {
 import { hasUnsafeSegment, normalizeKnowledgePath, sanitizeKnowledge } from "@/lib/defaultKnowledge";
 import { enforceSingleActive, mergeTeamsWithDefaults } from "@/lib/defaultTeams";
 import { MAIN_AGENT_ID, normalizeCustomAgents } from "@/lib/customAgents";
+import { normalizeSystemPrompts } from "@/lib/systemPrompts";
 
 /** The workspace sections the rail switches between. */
 export type Section =
@@ -56,7 +58,8 @@ export type Section =
   | "agents"
   | "skills"
   | "teams"
-  | "customagents";
+  | "customagents"
+  | "systemprompts";
 
 /** Connection state surfaced to the user. Slow ≠ offline; only a lost connection is "offline". */
 export type Connection = "online" | "reconnecting" | "offline";
@@ -97,6 +100,10 @@ interface AppState {
   customAgents: CustomAgent[];
   /** The active agent for chat turns: a Custom Agent id, or null / "main" for the built-in Main Agent. */
   activeCustomAgentId: string | null;
+  /** User-saved custom system prompts for the EXISTING Main Agent (instructions only, never a new agent). */
+  mainAgentSystemPrompts: SystemPrompt[];
+  /** The active custom system prompt id, or null to use the built-in Main Agent system prompt. */
+  activeMainAgentSystemPromptId: string | null;
   activeRun: ActiveRun | null;
 
   // Ephemeral UI
@@ -249,6 +256,13 @@ interface AppState {
   deleteCustomAgent: (id: string) => void;
   /** Select which agent chat turns run as: a Custom Agent id, or null for the built-in Main Agent. */
   setActiveCustomAgent: (id: string | null) => void;
+
+  // Custom system prompts for the existing Main Agent (instructions only — never a new agent)
+  addSystemPrompt: (input: Omit<SystemPrompt, "id" | "createdAt" | "updatedAt">) => SystemPrompt;
+  updateSystemPrompt: (id: string, patch: Partial<Omit<SystemPrompt, "id" | "createdAt">>) => void;
+  deleteSystemPrompt: (id: string) => void;
+  /** Select which saved system prompt the Main Agent uses, or null for the built-in prompt. */
+  setActiveSystemPrompt: (id: string | null) => void;
 
   // Multi-agent team live run (rendered inline in the assistant container message)
   startTeamRun: (
@@ -488,6 +502,8 @@ export const useStore = create<AppState>()(
       agentTeams: mergeTeamsWithDefaults([]),
       customAgents: [],
       activeCustomAgentId: null,
+      mainAgentSystemPrompts: [],
+      activeMainAgentSystemPromptId: null,
       activeRun: null,
 
       hydrated: false,
@@ -562,6 +578,16 @@ export const useStore = create<AppState>()(
             typeof (state as { activeCustomAgentId?: unknown }).activeCustomAgentId === "string"
               ? ((state as { activeCustomAgentId?: string }).activeCustomAgentId ?? null)
               : s.activeCustomAgentId,
+          mainAgentSystemPrompts: normalizeSystemPrompts(
+            (p as { mainAgentSystemPrompts?: unknown }).mainAgentSystemPrompts ??
+              s.mainAgentSystemPrompts,
+          ),
+          activeMainAgentSystemPromptId:
+            typeof (state as { activeMainAgentSystemPromptId?: unknown })
+              .activeMainAgentSystemPromptId === "string"
+              ? ((state as { activeMainAgentSystemPromptId?: string })
+                  .activeMainAgentSystemPromptId ?? null)
+              : s.activeMainAgentSystemPromptId,
         }));
       },
 
@@ -1047,6 +1073,34 @@ export const useStore = create<AppState>()(
 
       setActiveCustomAgent: (id) =>
         set(() => ({ activeCustomAgentId: id && id !== MAIN_AGENT_ID ? id : null })),
+
+      // ---- Custom system prompts for the existing Main Agent ----------------------
+      // These only change the Main Agent's instructions; they never create a new agent. The backend
+      // is the source of truth: the saved prompts + active id sync via app-state and the backend
+      // applies the active prompt to each Main Agent turn.
+      addSystemPrompt: (input) => {
+        const now = Date.now();
+        const prompt: SystemPrompt = { id: uid("sysprompt"), createdAt: now, updatedAt: now, ...input };
+        set((s) => ({ mainAgentSystemPrompts: [prompt, ...s.mainAgentSystemPrompts] }));
+        return prompt;
+      },
+
+      updateSystemPrompt: (id, patch) =>
+        set((s) => ({
+          mainAgentSystemPrompts: s.mainAgentSystemPrompts.map((p) =>
+            p.id === id ? { ...p, ...patch, updatedAt: Date.now() } : p,
+          ),
+        })),
+
+      deleteSystemPrompt: (id) =>
+        set((s) => ({
+          mainAgentSystemPrompts: s.mainAgentSystemPrompts.filter((p) => p.id !== id),
+          // Deleting the active prompt falls back to the built-in Main Agent system prompt.
+          activeMainAgentSystemPromptId:
+            s.activeMainAgentSystemPromptId === id ? null : s.activeMainAgentSystemPromptId,
+        })),
+
+      setActiveSystemPrompt: (id) => set(() => ({ activeMainAgentSystemPromptId: id || null })),
 
       // ---- Multi-agent team live run ---------------------------------------------
       startTeamRun: (convId, msgId, info) =>

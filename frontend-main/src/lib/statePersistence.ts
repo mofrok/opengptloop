@@ -35,6 +35,8 @@ const SYNC_KEYS = [
   "agentTeams",
   "customAgents",
   "activeCustomAgentId",
+  "mainAgentSystemPrompts",
+  "activeMainAgentSystemPromptId",
 ] as const;
 
 type SyncKey = (typeof SYNC_KEYS)[number];

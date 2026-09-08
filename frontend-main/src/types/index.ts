@@ -253,6 +253,24 @@ export interface CustomAgent {
   updatedAt: number;
 }
 
+/**
+ * A saved custom system prompt for the EXISTING Main Agent. It only changes the Main Agent's
+ * instructions — it never creates a new agent, sub-agent, or team. Only one prompt is active at a
+ * time (see AppState.activeMainAgentSystemPromptId); when none is active the Main Agent uses its
+ * built-in system prompt. Persisted to the backend via the shared app-state sync.
+ */
+export interface SystemPrompt {
+  id: string;
+  /** Human-readable prompt name (required). */
+  name: string;
+  /** Optional short description of what this prompt is for. */
+  description: string;
+  /** The full system-prompt text used verbatim by the Main Agent when this prompt is active. */
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 /** Custom-agent definition in the backend/wire format sent with a turn when a Custom Agent is active. */
 export interface BackendCustomAgent {
   id: string;

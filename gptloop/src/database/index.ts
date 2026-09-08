@@ -15,6 +15,7 @@ export {
   createChatSessionId,
   createSubAgentSessionId,
   createCustomAgentId,
+  createSystemPromptId,
   isSafeSessionId,
 } from "./ids.js";
 export { resolveDatabasePath, GPTLOOP_DATA_DIR, DATABASE_FILE_NAME } from "./connection.js";

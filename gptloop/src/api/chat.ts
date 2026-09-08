@@ -21,6 +21,7 @@ import {
   normalizeCustomAgentConfig,
   type CustomAgentConfig,
 } from "../agents/customagent/index.js";
+import type { MainAgentPromptManager } from "../agents/systemprompts/index.js";
 
 /** Extract a string field from an untrusted object (used on the custom_provider payload). */
 function str(value: unknown): string {
@@ -222,6 +223,7 @@ export function buildChatRouter(
   multiAgent: MultiAgentRunner,
   customAgents: CustomAgentManager,
   customAgentRunner: CustomAgentRunner,
+  mainAgentPrompts: MainAgentPromptManager,
 ): Router {
   const router = Router();
 
@@ -441,6 +443,11 @@ export function buildChatRouter(
         enableReuseSubAgentSession:
           body.enable_reuse_sub_agent_session === true ||
           body.enable_reuse_sub_agent_session === "yes",
+        // Custom System Prompts: when the user has a saved custom prompt active, it REPLACES the
+        // built-in Main Agent prompt for this turn (backend is the source of truth). When none is
+        // active this is undefined and the Main Agent builds its built-in prompt exactly as before.
+        // A Custom Agent turn ignores this — its own runner overrides systemPromptOverride below.
+        systemPromptOverride: mainAgentPrompts.resolveActivePromptText() ?? undefined,
       };
 
       // Custom Agent mode: when the active agent is a user-created top-level Custom Agent, run this

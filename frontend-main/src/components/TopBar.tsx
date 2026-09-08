@@ -16,6 +16,8 @@ function contextLabel(section: Section, counts: Record<string, number>): string 
       return `${counts.teams} team${counts.teams === 1 ? "" : "s"}`;
     case "customagents":
       return `${counts.customagents} agent${counts.customagents === 1 ? "" : "s"}`;
+    case "systemprompts":
+      return `${counts.systemprompts} prompt${counts.systemprompts === 1 ? "" : "s"}`;
     default:
       return null;
   }
@@ -37,6 +39,7 @@ export function TopBar() {
   const attachedFiles = useStore((s) => s.attachedFiles);
   const agentTeams = useStore((s) => s.agentTeams);
   const customAgents = useStore((s) => s.customAgents);
+  const mainAgentSystemPrompts = useStore((s) => s.mainAgentSystemPrompts);
   const activeCustomAgentId = useStore((s) => s.activeCustomAgentId);
   const setSection = useStore((s) => s.setSection);
 
@@ -46,6 +49,7 @@ export function TopBar() {
     skills: skills.length,
     teams: agentTeams.length,
     customagents: customAgents.length,
+    systemprompts: mainAgentSystemPrompts.length,
   });
   const isChat = section === "chat";
   const activeAgent = customAgents.find((a) => a.id === activeCustomAgentId) ?? null;

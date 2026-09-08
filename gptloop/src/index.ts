@@ -16,9 +16,11 @@ import { buildToolsRouter } from "./api/tools.js";
 import { buildMemoryAgentRouter } from "./api/memoryagent.js";
 import { buildSystemPromptRouter } from "./api/systemprompt.js";
 import { buildCustomAgentsRouter } from "./api/customagents.js";
+import { buildMainAgentPromptsRouter } from "./api/mainagentprompts.js";
 import { MemoryAgentService } from "./agents/memoryagent/index.js";
 import { MultiAgentRunner } from "./agents/multiagent/index.js";
 import { CustomAgentManager, CustomAgentRunner } from "./agents/customagent/index.js";
+import { MainAgentPromptManager } from "./agents/systemprompts/index.js";
 import { GptLoopDatabase } from "./database/index.js";
 
 function main(): void {
@@ -44,6 +46,10 @@ function main(): void {
   // runtime as the Main Agent (parameterized with each agent's system prompt + selected tools).
   const customAgents = new CustomAgentManager(db.appState);
   const customAgentRunner = new CustomAgentRunner(agent, tools, config);
+  // Custom System Prompts: user-authored instruction sets for the EXISTING Main Agent. The manager
+  // persists the saved prompts + active selection in the SQLite app_state repository and is the
+  // source of truth; the active prompt (if any) replaces the built-in Main Agent prompt on each turn.
+  const mainAgentPrompts = new MainAgentPromptManager(db.appState);
 
   const app = express();
   app.use(
@@ -71,6 +77,7 @@ function main(): void {
   app.use("/api/tools", buildToolsRouter(tools));
   app.use("/api/system-prompt", buildSystemPromptRouter(config));
   app.use("/api/custom-agents", buildCustomAgentsRouter(customAgents));
+  app.use("/api/main-agent-prompts", buildMainAgentPromptsRouter(mainAgentPrompts));
   app.use(
     "/api/chat",
     buildChatRouter(
@@ -83,6 +90,7 @@ function main(): void {
       multiAgent,
       customAgents,
       customAgentRunner,
+      mainAgentPrompts,
     ),
   );
   app.use("/api/files", buildFilesRouter(config));
