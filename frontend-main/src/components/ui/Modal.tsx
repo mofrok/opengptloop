@@ -53,24 +53,34 @@ export function Modal({
 
   return (
     <div
-      className={cn(
-        "fixed inset-0 z-[80] flex justify-center overlay-in",
-        align === "center" ? "items-center p-4" : "items-start p-4 pt-[8vh]",
-      )}
+      className="fixed inset-0 z-[80] overflow-y-auto overscroll-contain overlay-in"
       style={{ background: "rgba(28,28,25,0.28)", backdropFilter: "blur(3px)" }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
+      {/*
+        Scroll container + a min-h-full flex wrapper. The wrapper reserves space for the top header
+        (via padding-top) so the dialog is always centered within the visible area BELOW the header,
+        never hidden underneath it. When a dialog is taller than the viewport the outer container
+        scrolls instead of clipping the top — so every part stays reachable.
+      */}
       <div
         className={cn(
-          "flex max-h-[86vh] w-full flex-col overflow-hidden rounded-[var(--radius-xl)] bg-[var(--bg)] pop-in",
-          SIZES[size],
-          className,
+          "flex min-h-full justify-center px-4 pb-6",
+          align === "center" ? "items-center" : "items-start",
         )}
-        style={{ boxShadow: "var(--shadow-pop)" }}
-        onClick={(e) => e.stopPropagation()}
+        style={{ paddingTop: "calc(var(--topbar-h) + 1rem)" }}
       >
+        <div
+          className={cn(
+            "flex max-h-[calc(100dvh-var(--topbar-h)-2.5rem)] w-full flex-col overflow-hidden rounded-[var(--radius-xl)] bg-[var(--bg)] pop-in",
+            SIZES[size],
+            className,
+          )}
+          style={{ boxShadow: "var(--shadow-pop)" }}
+          onClick={(e) => e.stopPropagation()}
+        >
         {(title || icon || lead || actions) && (
           <header className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-4">
             <div className="flex min-w-0 items-center gap-2.5">
@@ -98,6 +108,7 @@ export function Modal({
             {footer}
           </footer>
         )}
+        </div>
       </div>
     </div>
   );

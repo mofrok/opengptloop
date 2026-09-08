@@ -56,6 +56,8 @@
   --radius-xl: 24px;
   --radius-2xl: 28px;
   --rail-w: 4.5rem;
+  /* Height of the app's top header (TopBar, h-14). Popups clear this so no part is hidden. */
+  --topbar-h: 3.5rem;
 
   --shadow-card:
     0 0 0 1px rgba(28, 28, 25, 0.08),

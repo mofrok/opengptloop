@@ -13,8 +13,8 @@ export function PreviewPanel() {
   const url = preview.url.trim();
 
   return (
-    <div className="fixed inset-0 z-[85] flex items-center justify-center p-4 overlay-in" style={{ background: "rgba(28,28,25,0.4)", backdropFilter: "blur(3px)" }} onClick={() => setPreviewOpen(false)}>
-      <div className="flex h-[90vh] w-[min(1100px,92vw)] flex-col overflow-hidden rounded-[var(--radius-xl)] bg-[var(--bg)] pop-in" style={{ boxShadow: "var(--shadow-pop)" }} onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[85] flex items-center justify-center px-4 pb-6 overlay-in" style={{ background: "rgba(28,28,25,0.4)", backdropFilter: "blur(3px)", paddingTop: "calc(var(--topbar-h) + 1rem)" }} onClick={() => setPreviewOpen(false)}>
+      <div className="flex h-full max-h-[calc(100dvh-var(--topbar-h)-2.5rem)] w-[min(1100px,92vw)] flex-col overflow-hidden rounded-[var(--radius-xl)] bg-[var(--bg)] pop-in" style={{ boxShadow: "var(--shadow-pop)" }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
           <div className="flex min-w-0 items-center gap-2">
             <Globe className="h-4 w-4 shrink-0 text-[var(--secondary)]" />
